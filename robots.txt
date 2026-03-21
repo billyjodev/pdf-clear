@@ -1,0 +1,13 @@
+# robots.txt for PDF-Clear
+
+User-agent: *
+Allow: /
+
+# Disallow analytics and tracking
+Disallow: /analytics/
+
+# Sitemap location
+Sitemap: https://billyjodev.github.io/pdf-clear/sitemap.xml
+
+# Crawl delay (optional, be polite)
+Crawl-delay: 1
