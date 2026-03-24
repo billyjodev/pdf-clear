@@ -497,112 +497,67 @@ class PdfRegionEraser {
         let startButton = null;
         let rightClickDragDone = false;
         let rightClickEndX, rightClickEndY;
+        let canvasRect = canvas.getBoundingClientRect();
 
-        canvas.addEventListener('mousedown', async (e) => {
-            // If right-click selection is active, any click (left or right) triggers delete
-            if (this.isRightClickSelecting && (e.button === 0 || e.button === 2)) {
-                e.preventDefault();
-                let endX, endY;
-                if (rightClickDragDone) {
-                    endX = rightClickEndX;
-                    endY = rightClickEndY;
-                } else {
-                    const rect = canvas.getBoundingClientRect();
-                    endX = e.clientX - rect.left;
-                    endY = e.clientY - rect.top;
-                }
+        // Helper to clamp coordinates to canvas bounds
+        const clampToCanvas = (x, y) => {
+            return {
+                x: Math.max(0, Math.min(x, canvasWidth)),
+                y: Math.max(0, Math.min(y, canvasHeight))
+            };
+        };
 
-                const x1 = Math.min(startX, endX) / canvasWidth;
-                const y1 = Math.min(startY, endY) / canvasHeight;
-                const x2 = Math.max(startX, endX) / canvasWidth;
-                const y2 = Math.max(startY, endY) / canvasHeight;
+        // Helper to get canvas-relative coordinates
+        const getCanvasCoords = (clientX, clientY) => {
+            canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: clientX - canvasRect.left,
+                y: clientY - canvasRect.top
+            };
+        };
 
-                this.isRightClickSelecting = false;
-                rightClickDragDone = false;
-                if (selectionBox) {
-                    selectionBox.remove();
-                    selectionBox = null;
-                }
-                await this.handleRightClickDelete(x1, y1, x2, y2);
-                return;
-            }
-
-            if (e.button === 2) {
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                startX = e.clientX - rect.left;
-                startY = e.clientY - rect.top;
-                this.isRightClickSelecting = true;
-                startButton = 2;
-
-                selectionBox = document.createElement('div');
-                selectionBox.className = 'selection-box delete-box';
-                selectionBox.style.left = startX + 'px';
-                selectionBox.style.top = startY + 'px';
-                selectionBox.style.width = '0px';
-                selectionBox.style.height = '0px';
-                container.appendChild(selectionBox);
-                return;
-            }
-
-            if (this.isRightClickSelecting) {
-                e.preventDefault();
-                return;
-            }
-
-            const rect = canvas.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
-            this.isSelecting = true;
-            startButton = 0;
-
-            selectionBox = document.createElement('div');
-            selectionBox.className = 'selection-box';
-            selectionBox.style.left = startX + 'px';
-            selectionBox.style.top = startY + 'px';
-            selectionBox.style.width = '0px';
-            selectionBox.style.height = '0px';
-            container.appendChild(selectionBox);
-        });
-
-        canvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
+        // Helper to handle mouse move during selection
+        const handleMouseMove = (e) => {
             if (!this.isSelecting && !this.isRightClickSelecting) return;
             if (this.isRightClickSelecting && rightClickDragDone) return;
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-            const w = currentX - startX;
-            const h = currentY - startY;
+
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            const clamped = clampToCanvas(coords.x, coords.y);
+            const w = clamped.x - startX;
+            const h = clamped.y - startY;
 
             selectionBox.style.width = Math.abs(w) + 'px';
             selectionBox.style.height = Math.abs(h) + 'px';
-            selectionBox.style.left = (w < 0 ? currentX : startX) + 'px';
-            selectionBox.style.top = (h < 0 ? currentY : startY) + 'px';
-        });
+            selectionBox.style.left = (w < 0 ? clamped.x : startX) + 'px';
+            selectionBox.style.top = (h < 0 ? clamped.y : startY) + 'px';
+        };
 
-        canvas.addEventListener('mouseup', async (e) => {
+        // Helper to handle mouse up to finish selection
+        const handleMouseUp = async (e) => {
+            // Right click drag complete
             if (this.isRightClickSelecting && e.button === 2) {
                 rightClickDragDone = true;
-                const rect = canvas.getBoundingClientRect();
-                rightClickEndX = e.clientX - rect.left;
-                rightClickEndY = e.clientY - rect.top;
+                const coords = getCanvasCoords(e.clientX, e.clientY);
+                rightClickEndX = coords.x;
+                rightClickEndY = coords.y;
                 return;
             }
+
+            // Left click selection complete
             if (!this.isSelecting) return;
             this.isSelecting = false;
 
-            const rect = canvas.getBoundingClientRect();
-            const endX = e.clientX - rect.left;
-            const endY = e.clientY - rect.top;
+            // Remove window listeners
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
 
-            const x1 = Math.min(startX, endX) / canvasWidth;
-            const y1 = Math.min(startY, endY) / canvasHeight;
-            const x2 = Math.max(startX, endX) / canvasWidth;
-            const y2 = Math.max(startY, endY) / canvasHeight;
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            const clamped = clampToCanvas(coords.x, coords.y);
+
+            const x1 = Math.min(startX, clamped.x) / canvasWidth;
+            const y1 = Math.min(startY, clamped.y) / canvasHeight;
+            const x2 = Math.max(startX, clamped.x) / canvasWidth;
+            const y2 = Math.max(startY, clamped.y) / canvasHeight;
             const width = x2 - x1;
             const height = y2 - y1;
 
@@ -625,16 +580,87 @@ class PdfRegionEraser {
                 selectionBox.remove();
                 selectionBox = null;
             }
+        };
+
+        canvas.addEventListener('mousedown', async (e) => {
+            canvasRect = canvas.getBoundingClientRect();
+
+            // If right-click selection is active, any click (left or right) triggers delete
+            if (this.isRightClickSelecting && (e.button === 0 || e.button === 2)) {
+                e.preventDefault();
+                let endX, endY;
+                if (rightClickDragDone) {
+                    endX = rightClickEndX;
+                    endY = rightClickEndY;
+                } else {
+                    const coords = getCanvasCoords(e.clientX, e.clientY);
+                    endX = coords.x;
+                    endY = coords.y;
+                }
+
+                const x1 = Math.min(startX, endX) / canvasWidth;
+                const y1 = Math.min(startY, endY) / canvasHeight;
+                const x2 = Math.max(startX, endX) / canvasWidth;
+                const y2 = Math.max(startY, endY) / canvasHeight;
+
+                this.isRightClickSelecting = false;
+                rightClickDragDone = false;
+                if (selectionBox) {
+                    selectionBox.remove();
+                    selectionBox = null;
+                }
+                await this.handleRightClickDelete(x1, y1, x2, y2);
+                return;
+            }
+
+            if (e.button === 2) {
+                e.preventDefault();
+                const coords = getCanvasCoords(e.clientX, e.clientY);
+                startX = coords.x;
+                startY = coords.y;
+                this.isRightClickSelecting = true;
+                startButton = 2;
+
+                selectionBox = document.createElement('div');
+                selectionBox.className = 'selection-box delete-box';
+                selectionBox.style.left = startX + 'px';
+                selectionBox.style.top = startY + 'px';
+                selectionBox.style.width = '0px';
+                selectionBox.style.height = '0px';
+                container.appendChild(selectionBox);
+
+                // Add window listeners for right-click drag
+                window.addEventListener('mousemove', handleMouseMove);
+                window.addEventListener('mouseup', handleMouseUp);
+                return;
+            }
+
+            if (this.isRightClickSelecting) {
+                e.preventDefault();
+                return;
+            }
+
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            startX = coords.x;
+            startY = coords.y;
+            this.isSelecting = true;
+            startButton = 0;
+
+            selectionBox = document.createElement('div');
+            selectionBox.className = 'selection-box';
+            selectionBox.style.left = startX + 'px';
+            selectionBox.style.top = startY + 'px';
+            selectionBox.style.width = '0px';
+            selectionBox.style.height = '0px';
+            container.appendChild(selectionBox);
+
+            // Add window listeners for selection drag
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
         });
 
-        canvas.addEventListener('mouseleave', () => {
-            if (this.isRightClickSelecting && rightClickDragDone) return;
-            if ((this.isSelecting || this.isRightClickSelecting) && selectionBox) {
-                selectionBox.remove();
-                selectionBox = null;
-            }
-            this.isSelecting = false;
-            this.isRightClickSelecting = false;
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
         });
     }
 
