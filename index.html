@@ -207,13 +207,13 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen flex flex-col">
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-500 text-white px-4 py-2 rounded-lg z-50">
         Skip to main content
     </a>
 
-    <div class="flex flex-col lg:flex-row gap-4 p-2 sm:p-4 h-screen">
+    <div class="flex flex-col lg:flex-row gap-4 p-2 sm:p-4 flex-1 min-h-0">
         <!-- Left Control Panel -->
         <aside class="w-full lg:w-64 flex-shrink-0 bg-white rounded-lg shadow-md p-3 sm:p-4 overflow-y-auto" role="complementary" aria-label="Tools and controls">
             <header>
@@ -246,9 +246,6 @@
                     Select PDF
                 </label>
                 <input type="file" id="pdfInput" accept=".pdf" class="hidden" aria-label="Select PDF file">
-                <button id="autoDetectText" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm" disabled aria-label="Automatically detect text regions using OCR">
-                    Auto Detect Text
-                </button>
                 <button id="applyAllToggle" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm" disabled aria-label="Apply all selections to pages">
                     Apply All
                 </button>
@@ -261,6 +258,9 @@
                 </button>
                 <button id="downloadPpt" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm" disabled aria-label="Export to PowerPoint">
                     Download PPT
+                </button>
+                <button id="autoDetectText" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm" disabled aria-label="Automatically detect text regions using OCR">
+                    Auto Detect Text <span class="text-xs opacity-75">(beta)</span>
                 </button>
             </nav>
 
@@ -312,7 +312,6 @@
                                 <li>Choose a fill color mode (Dominant/Border/Custom)</li>
                                 <li><strong>Left-click drag</strong> on the PDF to select regions (red box)</li>
                                 <li>Click <span class="font-medium">"Apply"</span> to confirm selections</li>
-                                <li><strong>Right-click drag</strong> to select an area (blue box), then <strong>left-click</strong> to delete selections in that area</li>
                                 <li>Download as PDF or PPT</li>
                             </ol>
                         </div>
@@ -325,7 +324,6 @@
                                 <li>채우기 색상 모드 선택 (Dominant/Border/Custom)</li>
                                 <li><strong>좌측 클릭 드래그</strong>로 영역 선택 (빨간 박스)</li>
                                 <li><span class="font-medium">"Apply"</span> 버튼으로 선택 적용</li>
-                                <li><strong>우측 클릭 드래그</strong>로 영역 선택 (파란 박스)하고 <strong>좌측 클릭</strong>하면 해당 영역의 선택영역 삭제</li>
                                 <li>PDF 또는 PPT로 다운로드</li>
                             </ol>
                         </div>
@@ -351,8 +349,20 @@
 
     <!-- Toast Modal -->
     <div id="toastWrapper" class="fixed top-4 right-4 z-50">
-        <div id="toastModal" class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300" role="alert" aria-live="polite" aria-atomic="true">
-            <span id="toastMessage">Message</span>
+        <div id="toastModal" class="bg-white rounded-lg shadow-xl transform translate-x-full transition-transform duration-300 min-w-72 overflow-hidden" role="alert" aria-live="polite" aria-atomic="true">
+            <!-- Progress Mode -->
+            <div id="toastProgress" class="p-4 hidden">
+                <div class="flex items-center gap-3 mb-3">
+                    <div id="toastSpinner" class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span id="toastTitle" class="font-medium text-gray-800"></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div id="toastProgressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="toastProgressMessage" class="text-sm text-gray-600"></p>
+            </div>
+            <!-- Message Mode -->
+            <div id="toastMessageText" class="px-6 py-3 text-gray-800"></div>
         </div>
         <div id="toastTab" class="absolute top-0 right-0 w-3 h-full cursor-pointer hidden"></div>
     </div>

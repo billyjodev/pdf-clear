@@ -66,8 +66,13 @@ class PdfRegionEraser {
         this.selectionCountSpan = $('selectionCount');
         this.selectionList = $('selectionList');
         this.toastModal = $('toastModal');
-        this.toastMessage = $('toastMessage');
+        this.toastMessageDiv = $('toastMessageText');
         this.toastTab = $('toastTab');
+        this.toastProgress = $('toastProgress');
+        this.toastSpinner = $('toastSpinner');
+        this.toastTitle = $('toastTitle');
+        this.toastProgressBar = $('toastProgressBar');
+        this.toastProgressMessage = $('toastProgressMessage');
         this.confirmModal = $('confirmModal');
         this.confirmMessage = $('confirmMessage');
         this.confirmOk = $('confirmOk');
@@ -106,7 +111,10 @@ class PdfRegionEraser {
     // ─── UI Utilities ───
 
     showToast(message) {
-        this.toastMessage.textContent = message;
+        // Show message mode
+        this.toastProgress.classList.add('hidden');
+        this.toastMessageDiv.classList.remove('hidden');
+        this.toastMessageDiv.textContent = message;
         this._lastToastMessage = message;
         this.toastModal.classList.remove('translate-x-full');
         this.toastTab.classList.add('hidden');
@@ -152,6 +160,28 @@ class PdfRegionEraser {
             this.confirmOk.addEventListener('click', onOk);
             this.confirmCancel.addEventListener('click', onCancel);
         });
+    }
+
+    showProgress(title, message = '', percent = 0) {
+        // Show progress mode
+        this.toastMessageDiv.classList.add('hidden');
+        this.toastProgress.classList.remove('hidden');
+        this.toastTitle.textContent = title;
+        this.toastProgressMessage.textContent = message;
+        this.toastProgressBar.style.width = `${percent}%`;
+        this.toastModal.classList.remove('translate-x-full');
+        this.toastTab.classList.add('hidden');
+        clearTimeout(this._toastTimer);
+        this._toastTimer = null;
+    }
+
+    updateProgress(message, percent) {
+        this.toastProgressMessage.textContent = message;
+        this.toastProgressBar.style.width = `${percent}%`;
+    }
+
+    hideProgress() {
+        this.toastModal.classList.add('translate-x-full');
     }
 
     getSelectedColorMode() {
@@ -1250,12 +1280,17 @@ class PdfRegionEraser {
         if (!this.pdfDoc) return;
 
         try {
+            this.showProgress('Generating PPT...', 'Loading library...', 5);
+
             await this.loadScript('PptxGenJS', 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
 
             const pptx = new PptxGenJS();
             const slideDataList = [];
 
             for (let i = 1; i <= this.totalPages; i++) {
+                const progressPercent = Math.floor(5 + (i / this.totalPages) * 60);
+                this.updateProgress(`Rendering page ${i}/${this.totalPages}...`, progressPercent);
+
                 const page = await this.pdfDoc.getPage(i);
                 const viewport = page.getViewport({ scale: 2.0 });
 
@@ -1295,10 +1330,15 @@ class PdfRegionEraser {
                 });
             }
 
+            this.updateProgress('Creating slides...', 70);
+
             const slideW = 10;
             const slideH = 5.625;
 
-            slideDataList.forEach(({ bgImage, croppedImages }) => {
+            slideDataList.forEach(({ bgImage, croppedImages }, idx) => {
+                const progressPercent = Math.floor(70 + (idx / slideDataList.length) * 20);
+                this.updateProgress(`Creating slide ${idx + 1}/${slideDataList.length}...`, progressPercent);
+
                 const slide = pptx.addSlide();
                 slide.addImage({ data: bgImage, x: 0, y: 0, w: '100%', h: '100%' });
                 croppedImages.forEach(crop => {
@@ -1310,9 +1350,14 @@ class PdfRegionEraser {
                 });
             });
 
+            this.updateProgress('Writing file...', 95);
             await pptx.writeFile({ fileName: `${this.originalFileName}_cleared.pptx` });
+
+            this.updateProgress('Complete!', 100);
+            setTimeout(() => this.hideProgress(), 500);
         } catch (error) {
             console.error('PPT download error:', error);
+            this.hideProgress();
             this.showToast('An error occurred while generating the PPT: ' + error.message);
         }
     }

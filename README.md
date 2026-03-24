@@ -57,58 +57,6 @@ You can also use the web version at: **https://billyjodev.github.io/pdf-clear**
 
 ---
 
-## SEO & GEO Optimization
-
-The application is optimized for search engines and international audiences:
-
-### Meta Tags
-- **Description**: Clear, keyword-rich description for search results
-- **Keywords**: Relevant terms for PDF editing, privacy, and online tools
-- **Open Graph**: Social media sharing optimization (Facebook, LinkedIn)
-- **Twitter Cards**: Enhanced sharing on X/Twitter
-- **Canonical URL**: Prevents duplicate content issues
-
-### Structured Data (JSON-LD)
-- **WebApplication** schema for better search understanding
-- **SoftwareApplication** schema for app store-like listings
-- Feature lists and ratings for rich snippets
-
-### GEO Targeting
-- **hreflang** tags for English and Korean audiences
-- **x-default** for global audience targeting
-- Language-aware content delivery
-
-### Performance
-- **Preconnect** hints for CDN resources
-- **dns-prefetch** for analytics services
-- Browser caching headers (via .htaccess)
-
-### Accessibility
-- Semantic HTML5 elements (main, nav, aside, section, footer)
-- ARIA labels for screen readers
-- Skip-to-content link for keyboard navigation
-- Focus management and live regions
-
-### Additional Files
-- `robots.txt`: Search engine crawling instructions
-- `sitemap.xml`: Site structure for search engines
-- `site.webmanifest`: PWA manifest for installable app
-- `.htaccess`: Server configuration for performance and security
-
----
-
-## Tech Stack
-
-| Library | Version | Purpose |
-|---------|---------|---------|
-| **PDF.js** | 3.11.174 | PDF rendering to canvas |
-| **pdf-lib** | 1.17.1 | PDF modification for download |
-| **PptxGenJS** | 3.12.0 | PowerPoint export |
-| **Tesseract.js** | 5.x | OCR-based text detection |
-| **Tailwind CSS** | (CDN) | Styling |
-
----
-
 ## Licenses
 
 This project uses the following open-source libraries:
@@ -170,26 +118,6 @@ pdf-clear/
 
 ---
 
-## Architecture
-
-The application uses a single-class design in `app.js`: `PdfRegionEraser` manages all state and DOM interaction.
-
-### Core Data Model
-- `pagesData[]` — per-page state: `selections` (applied fills) and `pendingSelections` (drawn but not yet applied)
-- All coordinates are normalized to 0–1 range relative to page dimensions, enabling resolution-independent storage
-- Color modes: `dominant` (most frequent color in region), `border` (average of edge pixels), `custom` (user-picked hex)
-
-### Rendering Flow
-1. PDF page → canvas via PDF.js at an optimal scale fitting the viewport
-2. Applied selections are drawn as filled rectangles on the canvas
-3. Pending selections appear as dashed red overlay boxes (DOM elements, not canvas)
-4. On download, selections are replayed onto the original PDF via pdf-lib using normalized coordinates
-
-### Coordinate System Note
-PDF.js canvas uses top-left origin; pdf-lib uses bottom-left origin. The `downloadModifiedPdf` method flips Y: `y = height - (sel.y + sel.height) * height`.
-
----
-
 ## Notes
 
 - Large PDF files may take some time to load
@@ -201,8 +129,6 @@ PDF.js canvas uses top-left origin; pdf-lib uses bottom-left origin. The `downlo
 ## License
 
 This project is open source and available under the MIT License.
-
----
 
 ---
 
@@ -258,58 +184,6 @@ PDF 파일의 특정 영역을 선택하고 지정한 색상으로 채울 수 �
 ## 웹 버전
 
 웹 버전도 이용 가능합니다: **https://billyjodev.github.io/pdf-clear**
-
----
-
-## SEO 및 GEO 최적화
-
-이 애플리케이션은 검색 엔진과 글로벌 사용자를 위해 최적화되어 있습니다:
-
-### 메타 태그
-- **설명**: 검색 결과를 위한 명확하고 키워드가 풍부한 설명
-- **키워드**: PDF 편집, 프라이버시, 온라인 도구 관련 검색어
-- **Open Graph**: 소셜 미디어 공유 최적화 (Facebook, LinkedIn)
-- **Twitter Cards**: X/Twitter에서의 향상된 공유
-- **Canonical URL**: 중복 콘텐츠 문제 방지
-
-### 구조화된 데이터 (JSON-LD)
-- **WebApplication** 스키마로 검색 엔진 이해도 향상
-- **SoftwareApplication** 스키마로 앱 스토어 스타일 목록
-- 기능 목록과 평점을 통한 리치 스니펫 지원
-
-### GEO 타겟팅
-- **hreflang** 태그로 영어 및 한국어 사용자 타겟팅
-- **x-default**로 글로벌 사용자 타겟팅
-- 언어 인식 콘텐츠 전달
-
-### 성능
-- CDN 리소스를 위한 **preconnect** 힌트
-- 분석 서비스를 위한 **dns-prefetch**
-- 브라우저 캐싱 헤더 (.htaccess 통해)
-
-### 접근성
-- 시맨틱 HTML5 요소 (main, nav, aside, section, footer)
-- 스크린 리더를 위한 ARIA 라벨
-- 키보드 내비게이션을 위한 건너뛰기 링크
-- 포커스 관리 및 라이브 리전
-
-### 추가 파일
-- `robots.txt`: 검색 엔진 크롤링 지시사항
-- `sitemap.xml`: 검색 엔진을 위한 사이트 구조
-- `site.webmanifest`: 설치 가능한 앱을 위한 PWA 매니페스트
-- `.htaccess`: 성능 및 보안을 위한 서버 설정
-
----
-
-## 기술 스택
-
-| 라이브러리 | 버전 | 용도 |
-|-----------|------|------|
-| **PDF.js** | 3.11.174 | PDF를 캔버스에 렌더링 |
-| **pdf-lib** | 1.17.1 | PDF 수정 및 다운로드 |
-| **PptxGenJS** | 3.12.0 | PPT 내보내기 |
-| **Tesseract.js** | 5.x | OCR 기반 텍스트 감지 |
-| **Tailwind CSS** | (CDN) | 스타일링 |
 
 ---
 
@@ -371,26 +245,6 @@ pdf-clear/
 ├── app.js        # 애플리케이션 로직 (단일 클래스 설계)
 └── README.md     # 이 파일
 ```
-
----
-
-## 아키텍처
-
-애플리케이션은 `app.js`의 단일 클래스 설계를 사용합니다: `PdfRegionEraser`가 모든 상태와 DOM 상호작용을 관리합니다.
-
-### 핵심 데이터 모델
-- `pagesData[]` — 페이지별 상태: `selections` (적용된 채우기) 및 `pendingSelections` (그려졌지만 아직 적용되지 않음)
-- 모든 좌표는 페이지 크기에 상대적인 0–1 범위로 정규화되어 해상도 독립적 저장을 지원
-- 색상 모드: `dominant` (영역에서 가장 빈번한 색), `border` (가장자리 픽셀 평균), `custom` (사용자 선택 hex)
-
-### 렌더링 흐름
-1. PDF 페이지 → PDF.js를 통해 뷰포트에 맞는 최적 스케일의 캔버스로
-2. 적용된 선택 영역이 캔버스에 채워진 사각형으로 그려짐
-3. 대기 중인 선택 영역은 점선 빨간색 오버레이 박스로 표시 (DOM 요소, 캔버스 아님)
-4. 다운로드 시 정규화된 좌표를 사용하여 pdf-lib을 통해 원본 PDF에 선택 영역이 재생됨
-
-### 좌표계 참고
-PDF.js 캔버스는 좌상단 원점 사용; pdf-lib은 좌하단 원점 사용. `downloadModifiedPdf` 메서드는 Y를 반전: `y = height - (sel.y + sel.height) * height`.
 
 ---
 
