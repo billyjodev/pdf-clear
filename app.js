@@ -54,6 +54,7 @@ class PdfRegionEraser {
         this.downloadPdfBtn = $('downloadPdf');
         this.downloadPptBtn = $('downloadPpt');
         this.autoDetectTextBtn = $('autoDetectText');
+        this.luckyBtn = $('luckyBtn');
         this.pdfViewer = $('pdfViewer');
         this.pageNav = $('pageNav');
         this.firstPageBtn = $('firstPage');
@@ -90,6 +91,7 @@ class PdfRegionEraser {
         this.downloadPdfBtn.addEventListener('click', () => this.downloadModifiedPdf());
         this.downloadPptBtn.addEventListener('click', () => this.downloadAsPpt());
         this.autoDetectTextBtn.addEventListener('click', () => this.autoDetectText());
+        this.luckyBtn.addEventListener('click', () => this.luckySelect());
 
         this.colorModeInputs.forEach(input => {
             input.addEventListener('change', (e) => {
@@ -1027,6 +1029,7 @@ class PdfRegionEraser {
         this.downloadPdfBtn.disabled = !hasAnyApplied;
         this.downloadPptBtn.disabled = !this.pdfDoc;
         this.autoDetectTextBtn.disabled = !this.pdfDoc;
+        this.luckyBtn.disabled = !this.pdfDoc;
     }
 
     // ─── Batch Operations ───
@@ -1142,6 +1145,53 @@ class PdfRegionEraser {
         this.renderPage(pageData.pageNumber);
         this.refreshUI();
         this.showToast(`Page ${pageIndex + 1}: All selections cleared.`);
+    }
+
+    // ─── Lucky Selection ───
+
+    async luckySelect() {
+        if (!this.pdfDoc) return;
+
+        // Lucky selection coordinates (normalized 0-1)
+        const luckyX = 0.921;
+        const luckyY = 0.969;
+        const luckyW = 0.076;
+        const luckyH = 0.024;
+
+        const colorMode = this.getSelectedColorMode();
+        const customColor = colorMode === 'custom' ? this.fillColorInput.value : null;
+        const groupId = 'lucky_' + Date.now();
+
+        // Create and apply selection on all pages
+        for (let i = 0; i < this.pagesData.length; i++) {
+            const pageData = this.pagesData[i];
+
+            // Create applied selection directly
+            const selection = {
+                id: Date.now() + Math.random() + i,
+                selNumber: pageData.nextSelNumber++,
+                displayNumber: pageData.nextSelNumber - 1,
+                sourceNumber: pageData.nextSelNumber - 1,
+                x: luckyX,
+                y: luckyY,
+                width: luckyW,
+                height: luckyH,
+                colorMode: colorMode,
+                customColor: customColor,
+                color: null, // Will be computed when rendering
+                groupId: groupId,
+                sourcePage: 1,
+                applyScope: 'all',
+                boxElement: null,
+                numberLabel: null
+            };
+
+            pageData.selections.push(selection);
+        }
+
+        this.renderCurrentPage();
+        this.refreshUI();
+        this.showToast('🍀 Lucky! Selection applied to all pages.');
     }
 
     // ─── Color Calculation ───
